@@ -14,32 +14,36 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ProductServiceImpl {
+public class SpringProductService implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductRepositoryElk productRepositoryElk;
 
     @Autowired
-    public ProductServiceImpl(final ProductRepository productRepository, final ProductRepositoryElk productRepositoryElk) {
+    public SpringProductService(final ProductRepository productRepository, final ProductRepositoryElk productRepositoryElk) {
         this.productRepository = productRepository;
         this.productRepositoryElk = productRepositoryElk;
     }
 
+    @Override
     @Transactional
     public Product save(final Product product) {
         return productRepository.save(product);
     }
     
+    @Override
     public Product getById(final UUID id){
         return productRepository.findById(id)
                 .orElseThrow(() -> new ProductNoFoundException(id));
     }
     
+    @Override
     public void deleteById(final UUID id) {
         getById(id);
         productRepository.deleteById(id);
     }
     
+    @Override
     public List<ProductELK> search(final String searchContent){
         return productRepositoryElk.findByNameOrDescription(searchContent, searchContent);
     }

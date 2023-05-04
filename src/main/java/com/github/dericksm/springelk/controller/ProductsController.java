@@ -5,12 +5,11 @@ import com.github.dericksm.springelk.model.dto.ProductDTO;
 import com.github.dericksm.springelk.model.dto.ProductRequestDTO;
 import com.github.dericksm.springelk.model.dto.ProductSearchResponseDTO;
 import com.github.dericksm.springelk.model.dto.UpdateProductRequestDTO;
-import com.github.dericksm.springelk.model.entity.Product;
 import com.github.dericksm.springelk.repository.ProductRepositoryElk;
-import com.github.dericksm.springelk.service.ProductServiceImpl;
-
+import com.github.dericksm.springelk.service.SpringProductService;
 import jakarta.validation.Valid;
-
+import java.util.List;
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,20 +26,17 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.List;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/products")
 public class ProductsController {
 
     private final ProductMapper productMapper;
-    private final ProductServiceImpl productService;
+    private final SpringProductService productService;
     private final ProductRepositoryElk productRepositoryElk;
 
     @Autowired
-    public ProductsController(ProductMapper productMapper, ProductServiceImpl productService,
-                              ProductRepositoryElk productRepositoryElk) {
+    public ProductsController(final ProductMapper productMapper, final SpringProductService productService,
+            final ProductRepositoryElk productRepositoryElk) {
         this.productMapper = productMapper;
         this.productService = productService;
         this.productRepositoryElk = productRepositoryElk;
@@ -50,10 +46,8 @@ public class ProductsController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ProductDTO> save(@RequestBody @Valid ProductRequestDTO productRequestDTO) {
         final var product = productService.save(productMapper.productRequestDTOtoProduct(productRequestDTO));
-        return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequest()
-                                              .path("/{id}")
-                                              .buildAndExpand(product.getId())
-                                              .toUri())
+        return ResponseEntity.created(
+                        ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(product.getId()).toUri())
                 .body(productMapper.productToProductDTO(product));
     }
 
@@ -61,9 +55,7 @@ public class ProductsController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ProductSearchResponseDTO> search(@RequestParam final String searchContent) {
         final List<ProductDTO> products = productRepositoryElk.findByNameOrDescription(searchContent, searchContent)
-                .stream()
-                .map(productMapper::productElkToProductDTO)
-                .toList();
+                .stream().map(productMapper::productElkToProductDTO).toList();
         return ResponseEntity.ok(new ProductSearchResponseDTO(products));
     }
 
@@ -71,14 +63,13 @@ public class ProductsController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<Void> delete(@PathVariable final UUID id) {
         productService.deleteById(id);
-        return ResponseEntity.noContent()
-                .build();
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public ResponseEntity<ProductDTO> update(@PathVariable final UUID id,
-                                       @RequestBody UpdateProductRequestDTO updateProductRequestDTO) {
+            @RequestBody UpdateProductRequestDTO updateProductRequestDTO) {
         var product = productService.getById(id);
         if (!ObjectUtils.isEmpty(updateProductRequestDTO.description())) {
             product.setDescription(updateProductRequestDTO.description());
